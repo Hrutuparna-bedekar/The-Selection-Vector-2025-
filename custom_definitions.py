@@ -228,3 +228,50 @@ submission_pipeline = Pipeline([
 ])
 
 #===============Shrihari=============================================
+
+#===============Hrutuparna_bedekar=============================================
+def dropper(X):
+    col_drop=['Row_ID','mixing_water_kg_mislabeled','json_notes','compressive_strength_mpas','compreesive_strength_mpa','nan_col','static_col','random_noise','batch_id','compressive_strength_mpa_str','compressive_strength_duplicate','last_modified','inspection_timestamp','supplier_rating','strength_category','weird_col','cement_grade','is_valid_strength','is_approved','pseudo_target','time_since_casting','leaky_strength_log','dangerous_ratio','Unnamed: 0']
+    X=X.replace([-np.inf,np.inf],np.NaN)
+        
+    
+      
+    X=X.drop(columns=[col for col in col_drop if col in X.columns],errors='ignore')
+    X['specimen_age_days']=np.where(X['specimen_age_days']<0,np.NaN,X['specimen_age_days'])
+   
+    
+    return X
+
+def imputation(X):
+    colum=X.columns         
+    knn=KNNImputer(n_neighbors=3)
+    X=knn.fit_transform(X)
+    X=pd.DataFrame(X,columns=colum)
+    for col in X.columns:
+        lower=X[col].quantile(0.01)
+        upper=X[col].quantile(0.99)
+        X[col]=X[col].clip(lower,upper)
+        
+    
+   
+    return X
+
+def agree(X):
+    
+   
+    X['Total_aggregate'] = X['gravel_aggregate_kg'] + X['sand_aggregate_kg']
+    X['binder_to_cement'] = (X['ground_slag_kg'] + X['coal_ash_kg']) / (X['portland_cement_kg']+1)
+    X['water_cement_cal_ratio']=X['mixing_water_kg']/(X['portland_cement_kg']+1)
+    X=X.drop(columns=['gravel_aggregate_kg','sand_aggregate_kg','ground_slag_kg','coal_ash_kg','portland_cement_kg','mixing_water_kg','water_cement_ratio'])
+    
+    
+    return X
+
+
+
+
+dropper_transform=FunctionTransformer(dropper,validate=False)
+impute_transform=FunctionTransformer(imputation,validate=False)
+agree_transform=FunctionTransformer(agree,validate=False)
+
+#===============Hrutuparna_bedekar=============================================
